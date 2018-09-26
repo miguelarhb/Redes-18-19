@@ -2,8 +2,8 @@
 
 import socket
 
-TCP_IP = '127.0.0.1'
-TCP_PORT = 5005
+TCP_IP = socket.gethostbyname("tejo.tecnico.ulisboa.pt")
+TCP_PORT = 58011
 BUFFER_SIZE = 1024
 MESSAGE = "Hello, World!"
 
@@ -13,4 +13,4 @@ s.send(MESSAGE)
 data = s.recv(BUFFER_SIZE)
 s.close()
 
-print "received data:", data
+print ("received data:", data)
