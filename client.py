@@ -3,6 +3,8 @@
 import socket
 import sys
 import datetime
+from datetime import datetime
+
 import os
 
 
@@ -42,6 +44,8 @@ def check_port(data):
       words+=1
     elif(words==2 and data[e]!=" "):
       port_sup+=data[e]
+    elif(words>3):
+      break
   return port_sup
 
 
@@ -152,12 +156,81 @@ while(a==1):
 
     if(data=='AUR OK\n'):
       files=os.listdir(directory)
-      print(len(files))
+      N=len(files)
+      command_send='BCK '+directory+' '+str(N)+' '
+      command_send_bit=command_send.encode()
+      #print(files[0])
+      for i in range(0,N):
+        file_name=files[i]
+        print(files[i])
+        directory_file=os.getcwd()+'\\'+directory+'\\'+files[i]
+        print(directory_file)
+        date=os.path.getctime(directory_file)
+        date_file=datetime.fromtimestamp(date).strftime('%d-%m-%Y %H:%M:%S')
+        print(date_file)
+        size=os.path.getsize(directory_file)
+        print(size)
+        command_send=file_name+' '+date_file+' '+str(size)+' '
+        command_send_bit+=command_send.encode()
+
+      print(command_send_bit)
+      s.send(command_send_bit)
+      command_send='UPL '+directory+' '
+      command_send_bit=command_send.encode()
+      space=0
+      while True:
+        data=s.recv(1).decode()
+        if not data:
+          break
+        recv_mesg+=data
+      s.close()
+      split_msg=recv_mesg.split(' ')
+      ip=split_msg[1]
+      port=split_msg[2]
+      num_files=split_msg[3]
+      command_send=num_files+' '
+      command_send_bit+=command_send.encode()
+      for n in range(0,int(num_files)-1):
+        directory_file=os.getcwd()+'\\'+directory+'\\'+split_msg[4(n+1)]
+        command_send=(split_msg[4(n+1)]+' ')
+        command_send+=(split_msg[5(n+1)]+' ')
+        command_send+=(split_msg[6(n+1)]+' ')
+        command_send+=(split_msg[7(n+1)]+' ')
+        command_send_bit+=command_send.encode()
+
+        size=int(split_msg[7(n+1)])
+        send_file=open(directory_file,"rb")
+        read=send_file.read(size)
+        barra=' '
+        barra_encode=barra.encode()
+        command_send_bit+=read
+        command_send_bit+=barra_encode
+
+      fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      fd.connect((ip, int(port)))
+
+      command_send_log='AUT'+' '+user+' '+password+'\n'
+      command_send_bit_log=command_send_log.encode()
+      fd.send(command_send_bit_log)
+      
+      data = fd.recv(BUFFER_SIZE)
+
+      if(data.decode()=='AUR OK\n'):
+        fd.send(command_send_bit)
+        data=fd.recv(BUFFER_SIZE).decode()
+        print(data)
 
 
 
 
-    s.close()
+
+
+
+
+
+
+
+    fd.close()
 
 #COMMAND RESTORE
   if(command_recv=="restore"):
@@ -248,7 +321,7 @@ while(a==1):
         data = s.recv(1).decode('UTF8')
    
         if not data:
-          break    # socket closed, all data read
+          break    #socket closed, all data read
         print(data, end='')
 
     
